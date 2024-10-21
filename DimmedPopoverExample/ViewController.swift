@@ -2,7 +2,6 @@ import UIKit
 
 final class ViewController: UIViewController {
     private weak var button: UIButton!
-    private weak var peepholeView: PeepholeView?
 
     override func loadView() {
         super.loadView()
@@ -22,6 +21,8 @@ final class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "View Controller"
+        navigationController?.navigationBar.backgroundColor = .green
+        tabBarController?.tabBar.backgroundColor = .blue
         tabBarItem = UITabBarItem(tabBarSystemItem: .favorites, tag: 0)
     }
 
@@ -29,16 +30,9 @@ final class ViewController: UIViewController {
         super.viewDidAppear(animated)
         let popoverViewController = PopoverViewController()
         popoverViewController.preferredContentSize = CGSize(width: 200, height: 100)
-        popoverViewController.modalPresentationStyle = .popover
-        popoverViewController.popoverPresentationController?.sourceView = button
-        popoverViewController.popoverPresentationController?.permittedArrowDirections = .up
-        popoverViewController.popoverPresentationController?.delegate = self
+        popoverViewController.modalPresentationStyle = .custom
+        popoverViewController.transitioningDelegate = self
         present(popoverViewController, animated: true)
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        peepholeView?.peepholeFrame = button.frame
     }
 
     @objc private func buttonDidTouchUpInside(_ sender: UIButton) {
@@ -46,28 +40,18 @@ final class ViewController: UIViewController {
     }
 }
 
+extension ViewController: UIViewControllerTransitioningDelegate {
+    func presentationController(forPresented presented: UIViewController, presenting: UIViewController?, source: UIViewController) -> UIPresentationController? {
+        let presentationController = DimmingPopoverPresentationController(presentedViewController: presented, presenting: presenting)
+        presentationController.sourceView = button
+        presentationController.permittedArrowDirections = .up
+        presentationController.delegate = self
+        return presentationController
+    }
+}
+
 extension ViewController: UIPopoverPresentationControllerDelegate {
     func adaptivePresentationStyle(for controller: UIPresentationController, traitCollection: UITraitCollection) -> UIModalPresentationStyle {
         .none
-    }
-
-    func presentationControllerWillDismiss(_ presentationController: UIPresentationController) {
-        peepholeView?.removeFromSuperview()
-    }
-
-    func prepareForPopoverPresentation(_ popoverPresentationController: UIPopoverPresentationController) {
-        let peepholeView = PeepholeView(frame: view.frame)
-        self.peepholeView = peepholeView
-        peepholeView.translatesAutoresizingMaskIntoConstraints = false
-        peepholeView.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        peepholeView.peepholeFrame = button.frame
-        peepholeView.peepholeCornerRadius = 4
-        view.addSubview(peepholeView)
-        NSLayoutConstraint.activate([
-            peepholeView.topAnchor.constraint(equalTo: view.topAnchor),
-            peepholeView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            peepholeView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            peepholeView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
     }
 }
